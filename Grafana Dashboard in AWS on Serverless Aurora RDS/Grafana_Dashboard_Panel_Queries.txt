@@ -1,0 +1,70 @@
+--Getting customer name
+
+select concat ('Hello ',first_name, ' ', last_name,'! Welcome Back!') 
+from CUSTOMER 
+where CREDIT_CARD_NUMBER = $Credit_Card_Number and DATE_OF_BIRTH = '$Date_of_Birth';
+
+--Current date time
+
+select sysdate()
+
+--Personal Details of Customer
+
+select first_name, last_name, gender, date_of_birth, job, street, zip, city_name, state  from CUSTOMER c
+join ADDRESS a on c.addr_id=a.addr_id
+join CITY cc on cc.city_id = a.city_id 
+where CREDIT_CARD_NUMBER = $Credit_Card_Number and DATE_OF_BIRTH = '$Date_of_Birth';
+
+--All vs Valid vs Invalid Transactions Chart
+
+select t.Total_Transactions, v.Valid_Transactions, i.Invalid_Transactions
+from
+(
+select count(*) as Total_Transactions , 'aa' as join_col
+from TRANSACTION t
+join CUSTOMER c
+on t.cust_id = c.cust_id
+where CREDIT_CARD_NUMBER = $Credit_Card_Number and DATE_OF_BIRTH = '$Date_of_Birth'
+  ) t
+join 
+(
+select count(*) as Valid_Transactions , 'aa' as join_col
+from TRANSACTION t
+join CUSTOMER c
+on t.cust_id = c.cust_id
+where t.is_fraud=0
+and CREDIT_CARD_NUMBER = $Credit_Card_Number and DATE_OF_BIRTH = '$Date_of_Birth'
+) v 
+on t.join_col = v.join_col
+join
+(
+select count(*) as Invalid_Transactions , 'aa' as join_col
+from TRANSACTION t
+join CUSTOMER c
+on t.cust_id = c.cust_id
+where t.is_fraud!=0
+and CREDIT_CARD_NUMBER = $Credit_Card_Number and DATE_OF_BIRTH = '$Date_of_Birth'
+  ) i
+on  i.join_col = v.join_col;
+
+--Shopping Trend of the Customer
+select M.Category, count(*) as Number_of_Transactions
+from TRANSACTION T
+join MERCHANT M
+on M.Merchant_id = T.Merchant_id
+join CUSTOMER C
+on T.cust_id = C.cust_id
+where CREDIT_CARD_NUMBER = $Credit_Card_Number and DATE_OF_BIRTH = '$Date_of_Birth'
+group by M.Category
+order by count(*) desc
+
+--Customer Transactions
+select TRANSFER_TIMESTAMP as TRANSACTION_DATE_TIME, 
+M.MERCHANT_NAME, M.CATEGORY,  T.AMOUNT, case when T.IS_FRAUD=0 then "Yes" else "No" end VALID_TRANSACTION
+from TRANSACTION T
+join MERCHANT M
+on M.MERCHANT_ID = T.MERCHANT_ID
+join CUSTOMER C
+on C.cust_id = T.cust_id
+where CREDIT_CARD_NUMBER = $Credit_Card_Number and DATE_OF_BIRTH = '$Date_of_Birth'
+order by TRANSFER_TIMESTAMP desc
